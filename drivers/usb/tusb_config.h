@@ -90,12 +90,21 @@
 #define CFG_TUD_ENDPOINT0_SIZE    64
 #endif
 
+// Size of buffer to hold descriptors and other data used for enumeration
+#define CFG_TUH_ENUMERATION_BUFSIZE 256
+
 //------------- CLASS -------------//
+#define CFG_TUH_HUB              1 // number of supported hubs
 #define CFG_TUD_CDC              1
 #define CFG_TUD_MSC              1
 #define CFG_TUD_HID              0
 #define CFG_TUD_MIDI             0
 #define CFG_TUD_VENDOR           0
+
+// max device support (excluding hub device): 1 hub typically has 4 ports
+#define CFG_TUH_DEVICE_MAX          (3*CFG_TUH_HUB + 1)
+//------------- MSC -------------//
+#define CFG_TUH_MSC_MAXLUN    4 // typical for most card reader
 
 // CDC FIFO size of TX and RX
 #define CFG_TUD_CDC_RX_BUFSIZE   (TUD_OPT_HIGH_SPEED ? 512 : 64)
