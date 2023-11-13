@@ -1199,6 +1199,19 @@ int main() {
     sem_release(&vga_start_semaphore);
     load_config();
     sleep_ms(50);
+
+    setVGAmode(BK256x512);
+    uint8_t t = 0x00;
+    while(1) {
+        sleep_ms(100);
+        memset(SCREEN, t++, sizeof(SCREEN));
+        for (size_t i = 0; i < NES_DISP_HEIGHT; ++i) {
+            InfoNES_PreDrawLine(i);
+            InfoNES_DrawLine();
+            InfoNES_PostDrawLine(i);
+        }
+    }
+
 #ifndef BUILD_IN_GAMES
     if(!parseROM(reinterpret_cast<const uint8_t *>(rom)) && f_mount(&fs, "", 1) == FR_OK) {
         InfoNES_Menu();

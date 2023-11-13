@@ -109,6 +109,7 @@ void __not_in_flash_func(dma_handler_VGA)() {
     uint32_t** ptr_vbuf_OUT;
     uint div_factor = 2;
     switch (mode_VGA) {
+      case BK256x512: // TODO:
       case VGA640x480div2:
         l_inx = line_active >> 1;
         if (line_active % 2) {
@@ -200,6 +201,7 @@ void __not_in_flash_func(dma_handler_VGA)() {
     uint16_t* pal= palette[p_i];
     uint8_t* vbuf_OUT8;
     switch (mode_VGA) {
+        case BK256x512: // TODO:
         case VGA640x480div2:
             for(int i = N_loop; i--; ) {
                 *vbuf_OUT++ = pal[*vbuf8++];
