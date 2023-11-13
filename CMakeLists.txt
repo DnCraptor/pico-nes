@@ -69,6 +69,7 @@ target_link_libraries(dendy PRIVATE
         nespad
         sdcard
         fatfs
+#        tinyusb ?
 
         pico_runtime
         pico_stdlib

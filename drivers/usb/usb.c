@@ -27,9 +27,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#define CFG_TUH_ENABLED 1
-#include "bsp/board_api.h"
 #include "tusb.h"
+#include "bsp/board_api.h"
 #include "usb.h"
 
 //--------------------------------------------------------------------+
