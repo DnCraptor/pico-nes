@@ -236,11 +236,12 @@ void setVGAmode(enum VGA_mode_t modeVGA) {
     int line_size  = 400 * 2;
     shift_picture2  = (line_size - HS_SHIFT) >> 1;
     palette16_mask = 0xc0c0;
-    visible_line_size = 320;
+    auto bkColor = modeVGA == BK256x512;
+    visible_line_size = bkColor ? 256 : 320;
     N_lines_total   = 525;
-    N_lines_visible = 480;
-    line_VS_begin   = 490;
-    line_VS_end     = 491;
+    N_lines_visible = bkColor ? 512 : 480;
+    line_VS_begin   = bkColor ? 515 : 490;
+    line_VS_end     = bkColor ? 516 : 491;
     double fdiv = clock_get_hz(clk_sys) / 25175000.0; // частота пиксельклока
     switch (modeVGA)
     {
@@ -269,8 +270,7 @@ void setVGAmode(enum VGA_mode_t modeVGA) {
             memcpy(fnt8x16, _fnt8x16, sz);
         }
         break;
-      case VGA640x480div3:
-      case VGA640x480div2:
+      default:
         if (txt_palette_fast) {
             free(txt_palette_fast);
             txt_palette_fast = NULL;
@@ -279,9 +279,6 @@ void setVGAmode(enum VGA_mode_t modeVGA) {
             free(fnt8x16);
             fnt8x16 = NULL;
         }
-        break;
-      default:
-        return;
     }
     // корректировка палитры по маске бит синхры
     bg_color[0] = (bg_color[0] & 0x3f3f3f3f) | palette16_mask | (palette16_mask << 16);
