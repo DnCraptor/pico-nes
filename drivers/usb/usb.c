@@ -27,6 +27,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#define CFG_TUH_ENABLED 1
 #include "bsp/board_api.h"
 #include "tusb.h"
 #include "usb.h"
@@ -171,4 +172,31 @@ void led_blinking_task(void)
 
   board_led_write(led_state);
   led_state = 1 - led_state; // toggle
+}
+
+
+//#include "tusb_config.h"
+static volatile bool _disk_busy[CFG_TUH_DEVICE_MAX];
+
+bool msc_app_init(void) {
+    for (size_t i = 0; i < CFG_TUH_DEVICE_MAX; ++i)
+        _disk_busy[i] = false;
+    // disable stdout buffered for echoing typing command
+#ifndef __ICCARM__ // TODO IAR doesn't support stream control ?
+    setbuf(stdout, NULL);
+#endif
+  //  cli_init();
+    return true;
+}
+void msc_app_task(void) {
+    // TODO:
+}
+
+void usb_host() {
+    init_pico_usb_drive();
+    while (1) {
+        // tinyusb host task
+        tuh_task();
+        msc_app_task();
+    }
 }

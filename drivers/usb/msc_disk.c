@@ -30,7 +30,7 @@
 #if CFG_TUD_MSC
 
 // whether host does safe-eject
-static bool ejected = false;
+static _Bool ejected = false;
 static size_t blocks_written = 0;
 
 // TODO: optimize space used:

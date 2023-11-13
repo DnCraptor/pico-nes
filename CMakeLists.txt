@@ -40,8 +40,8 @@ pico_set_boot_stage2(${PROJECT_NAME} slower_boot2)
 
 set(FAMILY rp2040)
 set(BOARD pico_sdk)
-family_configure_device_example(dendy noos)
-#family_configure_host_example(dendy noos)
+#family_configure_device_example(dendy noos)
+family_configure_host_example(dendy noos)
 
 target_sources(dendy PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/drivers/usb/usb.c

@@ -1176,31 +1176,6 @@ int InfoNES_LoadFrame() {
     return 0;
 }
 
-#include "tusb_config.h"
-#include "bsp/board_api.h"
-#include "tusb.h"
-static volatile bool _disk_busy[CFG_TUH_DEVICE_MAX];
-extern "C" {
-    void init_pico_usb_drive(); // TODO: usb.h
-   // void tuh_task(void) {
-    //    tuh_task_ext(UINT32_MAX, false);
-    //}
-}
-
-bool msc_app_init(void) {
-    for (size_t i = 0; i < CFG_TUH_DEVICE_MAX; ++i)
-        _disk_busy[i] = false;
-    // disable stdout buffered for echoing typing command
-#ifndef __ICCARM__ // TODO IAR doesn't support stream control ?
-    setbuf(stdout, NULL);
-#endif
-  //  cli_init();
-    return true;
-}
-void msc_app_task(void) {
-
-}
-
 int main() {
     vreg_set_voltage(VREG_VOLTAGE_1_15);
     sleep_ms(33);
@@ -1224,13 +1199,9 @@ int main() {
     sem_release(&vga_start_semaphore);
     load_config();
     sleep_ms(50);
+    
+    usb_host();
 
-    init_pico_usb_drive();
-    while (1) {
-        // tinyusb host task
-        tuh_task();
-        msc_app_task();
-    }
 #ifndef BUILD_IN_GAMES
     if(!parseROM(reinterpret_cast<const uint8_t *>(rom)) && f_mount(&fs, "", 1) == FR_OK) {
         InfoNES_Menu();

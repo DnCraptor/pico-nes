@@ -5,6 +5,7 @@
 #include "diskio.h"
 
 void in_flash_drive();
+void usb_host();
 // from vga.h
 void logMsg(char * msg);
 // from main.cpp
