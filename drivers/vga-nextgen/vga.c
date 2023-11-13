@@ -154,7 +154,7 @@ void __not_in_flash_func(dma_handler_VGA)() {
             d >>= 2;
             *vbuf_OUT16++ = fast_color[d & 3];
         }
-        dma_channel_set_read_addr(dma_chan_ctrl,ptr_vbuf_OUT, false) ;
+        dma_channel_set_read_addr(dma_chan_ctrl, ptr_vbuf_OUT, false) ;
         return;
       default:
         return;
