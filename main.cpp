@@ -1201,39 +1201,18 @@ int main() {
     sleep_ms(50);
 
     setVGAmode(BK256x512);
-    InfoNES_Init();
-    uint8_t t = 0x00;
-    settings.show_fps = true;
-    memset(SCREEN, t, sizeof(SCREEN));
-    gpio_put(PICO_DEFAULT_LED_PIN, true);
+    for (size_t y = 0; y < NES_DISP_HEIGHT; ++y) {
+        uint8_t t = 0x00;
+        for (size_t x = 0; x < NES_DISP_WIDTH; ++x) {
+            SCREEN[y][x++] = t;
+            SCREEN[y][x++] = t;
+            SCREEN[y][x++] = t;
+            SCREEN[y][x] = t++;
+            if (t > 0x10) t = 0x00;
+        }
+    }
     while(1) {
         sleep_ms(500);
-
-        setVGAmode(VGA640x480_text_80_30);
-        clrScr(t);
-        auto c = 0xFF - t;
-        char tmp[80]; sprintf(tmp, "c1: 0x%x; c2: 0x%x", t, c); draw_text(tmp, 15, 10, c/*t == 7 ? 1 : 7*/, t);
-
-        sleep_ms(500);
-
-        setVGAmode(BK256x512);
-        for (size_t x = 0; x < NES_DISP_WIDTH; ++x) {
-            for (size_t y = 0; y < NES_DISP_HEIGHT; ++y) {
-                if (x > (NES_DISP_WIDTH >> 1) == 0) {
-                    SCREEN[y][x] = (y > (NES_DISP_HEIGHT >> 1) == 0) ? t : c;
-                } else {
-                    SCREEN[y][x] = (y > (NES_DISP_HEIGHT >> 1) == 0) ? c : t;
-                }
-            }
-        }
-        //for (size_t i = 4; i < NES_DISP_HEIGHT -4; ++i) {//todo: 4?
-            //for(size_t j = 0; j < 256; ++j)
-            //    linebuffer[j] = ((int16_t)t++) << 8 | t;
-            // InfoNES_PreDrawLine(1);
-            // InfoNES_DrawLine();
-            // InfoNES_PostDrawLine(i);
-        //}
-        t++;
     }
 
 #ifndef BUILD_IN_GAMES
