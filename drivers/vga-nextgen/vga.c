@@ -116,7 +116,7 @@ void __not_in_flash_func(dma_handler_VGA)() {
         }
         line = l_inx - g_buf_shy;
         break;
-      case BK256x512: // TODO
+      case BK256x256: // TODO
         l_inx = line_active >> 1;
         if (line_active % 2) {
             return;
@@ -212,7 +212,7 @@ void __not_in_flash_func(dma_handler_VGA)() {
                 *vbuf_OUT++ = pal[*vbuf8++];
             }        
             break;
-        case BK256x512: // TODO
+        case BK256x256: // TODO
             for(int i = N_loop; i--; ) {
                 *vbuf_OUT++ = pal[*vbuf8++];
             }        
@@ -243,17 +243,17 @@ void setVGAmode(enum VGA_mode_t modeVGA) {
     uint8_t TMPL_VS8   = 0;
     uint8_t TMPL_HS8   = 0;
     uint8_t TMPL_LINE8 = 0b11000000;
-    auto bkColor = modeVGA == BK256x512;
-    int HS_SHIFT      = ((bkColor ? 256 : 320) + 8) * 2;
-    int HS_SIZE       =  (bkColor ?  72 :  48) * 2;
-    int line_size     = ((bkColor ? 256 : 320) + 80) * 2;
+    auto bkColor      = modeVGA == BK256x256;
+    int HS_SHIFT      = (bkColor ? 310 : 328) * 2;
+    int HS_SIZE       = (bkColor ?  80 :  48) * 2;
+    int line_size     = (bkColor ? 400 : 400) * 2;
     shift_picture2    = (line_size - HS_SHIFT) >> 1;
     palette16_mask    = 0xc0c0;
-    visible_line_size = bkColor ? 256      : 320;
-    N_lines_total     = bkColor ? 512 + 25 : 525;
-    N_lines_visible   = bkColor ? 512      : 480;
-    line_VS_begin     = bkColor ? 512 + 10 : 490;
-    line_VS_end       = bkColor ? 512 + 11 : 491;
+    visible_line_size = bkColor ? 256 : 320;
+    N_lines_total     = bkColor ? 550 : 525;
+    N_lines_visible   = (bkColor ? 256 : 240) * 2;
+    line_VS_begin     = bkColor ? 515 : 490;
+    line_VS_end       = bkColor ? 516 : 491;
     double fdiv = clock_get_hz(clk_sys) / 25175000.0; // частота пиксельклока
     switch (modeVGA)
     {

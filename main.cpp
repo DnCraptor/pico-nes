@@ -1200,10 +1200,33 @@ int main() {
     load_config();
     sleep_ms(50);
 
-    setVGAmode(BK256x512);
+    setVGAmode(BK256x256);
     for (size_t y = 0; y < NES_DISP_HEIGHT; ++y) {
         uint8_t t = 0x00;
         for (size_t x = 0; x < NES_DISP_WIDTH; ++x) {
+            if (y <= 3 || y >= NES_DISP_HEIGHT - 4) {
+                SCREEN[y][x++] = 0x10;
+                continue;
+            }
+            if (x <= 3 || x >= NES_DISP_WIDTH - 4) {
+                SCREEN[y][x++] = 0x10;
+                continue;
+            }
+            SCREEN[y][x++] = t;
+            SCREEN[y][x++] = t;
+            SCREEN[y][x++] = t;
+            SCREEN[y][x++] = t;
+
+            SCREEN[y][x++] = t;
+            SCREEN[y][x++] = t;
+            SCREEN[y][x++] = t;
+            SCREEN[y][x++] = t;
+
+            SCREEN[y][x++] = t;
+            SCREEN[y][x++] = t;
+            SCREEN[y][x++] = t;
+            SCREEN[y][x++] = t;
+
             SCREEN[y][x++] = t;
             SCREEN[y][x++] = t;
             SCREEN[y][x++] = t;

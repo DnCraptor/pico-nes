@@ -7,7 +7,7 @@ enum VGA_mode_t {
     VGA640x480div2,
     VGA640x480div3,
     VGA640x480_text_80_30,
-    BK256x512
+    BK256x256
 };
 
 #define PIO_VGA (pio0)
