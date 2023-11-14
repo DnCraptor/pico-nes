@@ -1200,6 +1200,7 @@ int main() {
     load_config();
     sleep_ms(50);
     
+    setVGAmode(VGA640x480_text_80_30);
     usb_host();
 
 #ifndef BUILD_IN_GAMES

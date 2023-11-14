@@ -142,6 +142,7 @@ target_compile_definitions(dendy PRIVATE
         FF_USE_FIND
         # usb
         PICO_DEFAULT_LED_PIN=25
+        CFG_TUSB_DEBUG=3
         # internal games
         #BUILD_IN_GAMES
 )
