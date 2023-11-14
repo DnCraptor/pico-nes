@@ -40,13 +40,22 @@ pico_set_boot_stage2(${PROJECT_NAME} slower_boot2)
 
 set(FAMILY rp2040)
 set(BOARD pico_sdk)
-#family_configure_device_example(dendy noos)
-family_configure_host_example(dendy noos)
+#both modes looks unsupported
+#family_configure_host_example(dendy noos)
+family_configure_device_example(dendy noos)
 
 target_sources(dendy PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/drivers/usb/usb.c
         ${CMAKE_CURRENT_SOURCE_DIR}/drivers/usb/msc_disk.c
         ${CMAKE_CURRENT_SOURCE_DIR}/drivers/usb/usb_descriptors.c
+# instead of family_configure_host_example(dendy noos)
+        ${PICO_SDK_PATH}/lib/tinyusb/src/host/usbh.c
+        ${PICO_SDK_PATH}/lib/tinyusb/src/host/hub.c
+        ${PICO_SDK_PATH}/lib/tinyusb/src/class/cdc/cdc_host.c
+        ${PICO_SDK_PATH}/lib/tinyusb/src/class/hid/hid_host.c
+        ${PICO_SDK_PATH}/lib/tinyusb/src/class/msc/msc_host.c
+        ${PICO_SDK_PATH}/lib/tinyusb/src/class/vendor/vendor_host.c
+        ${PICO_SDK_PATH}/lib/tinyusb/src/portable/raspberrypi/rp2040/hcd_rp2040.c
 )
 
 
@@ -69,6 +78,7 @@ target_link_libraries(dendy PRIVATE
         nespad
         sdcard
         fatfs
+#        tinyusb_pico_pio_usb
 #        tinyusb ?
 
         pico_runtime

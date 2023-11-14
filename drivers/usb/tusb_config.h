@@ -137,7 +137,10 @@
 #define CFG_TUH_ENUMERATION_BUFSIZE 256
 
 //------------- CLASS -------------//
+// as hub (host)
 #define CFG_TUH_HUB              1 // number of supported hubs
+#define CFG_TUH_MSC              1
+// as device
 #define CFG_TUD_CDC              1
 #define CFG_TUD_MSC              1
 #define CFG_TUD_HID              0
