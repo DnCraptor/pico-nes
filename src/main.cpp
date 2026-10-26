@@ -911,6 +911,10 @@ bool filebrowser_loadfile(const char pathname[256]) {
             return false;
         }
     }
+    /* The new cartridge is ready in XIP Flash.  Switch to it in place,
+     * exactly as the PSRAM path does, without rebooting the RP2350. */
+    rom_filename = (const char *)(XIP_BASE + FLASH_TARGET_OFFSET);
+    rom = (const uint8_t *)(XIP_BASE + FLASH_TARGET_OFFSET + FLASH_SECTOR_SIZE);
     return true;
 }
 
@@ -1251,9 +1255,8 @@ bool filebrowser(const char pathname[256], const char* executables) {
                             /* PSRAM contents are lost on power-off; do not
                              * auto-resume the older Flash ROM after reset. */
                             lock_start();
-                            return true;
                         }
-                        nes_safe_reset(); // Flash ROM: boot from persistent image
+                        return true; // Both Flash and PSRAM: restart only the NES emulation.
                     }
                 }
             }
