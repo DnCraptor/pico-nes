@@ -35,7 +35,7 @@ include(pico_sdk_import.cmake)
 
 project(nes C CXX ASM)
 
-set(PICO_PROGRAM_VERSION_STRING "307")
+set(PICO_PROGRAM_VERSION_STRING "308")
 
 option(I2S "Enable I2S sound" OFF)
 option(I2S_CS4334 "Enable I2S CS4334 sound" OFF)

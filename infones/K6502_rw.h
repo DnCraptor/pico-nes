@@ -110,13 +110,10 @@ static inline BYTE __not_in_flash_func(K6502_Read)(WORD wAddr)
       // Reset address latch
       PPU_Latch_Flag = 0;
 
-      // Make a Nametable 0 in V-Blank
-      if (PPU_Scanline >= SCAN_VBLANK_START && !(PPU_R0 & R0_NMI_VB))
-      {
-        PPU_R0 &= ~R0_NAME_ADDR;
-        PPU_NameTableBank = NAME_TABLE0;
-        PPU_Temp = PPU_Temp & 0xF3FF;
-      }
+      /* A read of $2002 does not touch the nametable selection on the real
+       * PPU.  The old InfoNES "nametable 0 in V-Blank" hack predates the
+       * Loopy scrolling here: a game that polls $2002 with NMI off (3D Block)
+       * lost the nametable of PPUCTRL and showed the wrong screen half. */
       return byRet;
     }
     break;
