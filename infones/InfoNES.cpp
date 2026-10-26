@@ -694,7 +694,20 @@ bool InfoNES_Main(bool skip_fb)
     /*-------------------------------------------------------------------*/
     /*  Start a NES emulation                                            */
     /*-------------------------------------------------------------------*/
-    skip_fb = InfoNES_Cycle();
+    for (;;) {
+      skip_fb = InfoNES_Cycle();
+      if (!skip_fb)
+        break;
+
+      /* A ROM change was requested. The emulator has returned from HSync,
+       * LoadFrame and the menu, so the file browser and FatFs run on a
+       * shallow stack rather than recursively inside InfoNES_Cycle(). */
+      if (InfoNES_Menu() == 0)
+        break; // New cartridge loaded. The next InfoNES_Main resets it.
+
+      /* ROM selection cancelled: continue the same CPU, mapper and APU
+       * state, without an InfoNES_Reset() or InfoNES_Fin(). */
+    }
   }
   // Completion treatment
   InfoNES_Fin();

@@ -747,6 +747,25 @@ static size_t flash_rom_capacity(void) {
     return flash_bytes - FLASH_TARGET_OFFSET - FLASH_SECTOR_SIZE;
 }
 
+/* RP2350 boot ROM flash operations restore the QMI M0 boot-time timing.
+ * At the CPU's overclock this can make the next XIP fetch unreliable.
+ * Restore the firmware's runtime timing BEFORE returning to XIP code. */
+static void __no_inline_not_in_flash_func(nes_flash_write_sector)(uint32_t offset, const uint8_t* data) {
+#if PICO_RP2350
+    const uint32_t timing = qmi_hw->m[0].timing;
+    const uint32_t rfmt = qmi_hw->m[0].rfmt;
+    const uint32_t rcmd = qmi_hw->m[0].rcmd;
+#endif
+    flash_range_erase(offset, FLASH_SECTOR_SIZE);
+    flash_range_program(offset, data, FLASH_SECTOR_SIZE);
+#if PICO_RP2350
+    qmi_hw->m[0].timing = timing;
+    qmi_hw->m[0].rfmt = rfmt;
+    qmi_hw->m[0].rcmd = rcmd;
+    __asm volatile ("dsb; isb" ::: "memory");
+#endif
+}
+
 bool filebrowser_loadfile(const char pathname[256]) {
     FIL file;
     FILINFO fileinfo;
@@ -848,8 +867,7 @@ bool filebrowser_loadfile(const char pathname[256]) {
         const uint8_t *mapped = (const uint8_t *)(XIP_BASE + target);
         if (memcmp(mapped, buffer, sizeof(buffer)) != 0) {
             uint32_t ints = save_and_disable_interrupts();
-            flash_range_erase(target, FLASH_SECTOR_SIZE);
-            flash_range_program(target, buffer, FLASH_SECTOR_SIZE);
+            nes_flash_write_sector(target, buffer);
             restore_interrupts(ints);
             if (memcmp(mapped, buffer, sizeof(buffer)) != 0) {
                 failed = true;
@@ -884,8 +902,7 @@ bool filebrowser_loadfile(const char pathname[256]) {
     if (memcmp(name_flash, name_sector, sizeof(name_sector)) != 0) {
         multicore_lockout_start_blocking();
         const uint32_t ints = save_and_disable_interrupts();
-        flash_range_erase(FLASH_TARGET_OFFSET, FLASH_SECTOR_SIZE);
-        flash_range_program(FLASH_TARGET_OFFSET, name_sector, FLASH_SECTOR_SIZE);
+        nes_flash_write_sector(FLASH_TARGET_OFFSET, name_sector);
         restore_interrupts(ints);
         multicore_lockout_end_blocking();
         if (memcmp(name_flash, name_sector, sizeof(name_sector)) != 0) {
@@ -1460,6 +1477,7 @@ static uint8_t menu_buttons() {
 
 int menu(bool opened_by_hotkey) {
     bool exit = false;
+    bool select_rom = false;
     graphics_set_mode(TEXTMODE_DEFAULT);
     char footer[TEXTMODE_COLS];
     int current_item = 0;
@@ -1561,12 +1579,10 @@ int menu(bool opened_by_hotkey) {
                         break;
                     case ROM_SELECT:
                         if (activate) {
+                            /* Return to InfoNES_Main before opening the browser:
+                             * FatFs must not run inside the HSync call stack. */
+                            select_rom = true;
                             exit = true;
-                            /* A new PSRAM ROM starts on the next InfoNES_Main
-                             * iteration; cancelling selection resumes this one. */
-                            if (InfoNES_Menu() == 0)
-                                return ROM_SELECT;
-                            break;
                         }
                         break;
                     case USB_DEVICE:
@@ -1620,7 +1636,7 @@ int menu(bool opened_by_hotkey) {
     updatePalette(settings.palette);
     set_game_graphics_mode();
     save_config();
-    return 0;
+    return select_rom ? ROM_SELECT : 0;
 }
 
 
