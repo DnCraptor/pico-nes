@@ -5,6 +5,7 @@
 #include <stdint.h>
 
 #define NES_PSRAM_BASE ((uintptr_t)0x11000000u)
+#define NES_PSRAM_UNCACHED_BASE ((uintptr_t)0x15000000u)
 #define NES_PSRAM_MAX_SIZE (16u * 1024u * 1024u)
 
 #ifdef __cplusplus

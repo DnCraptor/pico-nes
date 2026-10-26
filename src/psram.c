@@ -20,8 +20,6 @@ static bool psram_available;
 static size_t psram_size;
 static int psram_cs_gpio = -1;
 
-#define NES_PSRAM_UNCACHED_BASE ((uintptr_t)0x15000000u)
-
 static bool __no_inline_not_in_flash_func(psram_direct_probe)(void) {
     for (int attempt = 0; attempt < 3; ++attempt) {
         qmi_hw->direct_csr |= QMI_DIRECT_CSR_ASSERT_CS1N_BITS;

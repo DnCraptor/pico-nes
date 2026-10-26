@@ -13,6 +13,7 @@
 #include <hardware/flash.h>
 #if PICO_RP2350
 #include <hardware/structs/qmi.h>
+#include "pico/bootrom.h"
 #endif
 
 #include "main.h"
@@ -794,7 +795,14 @@ bool filebrowser_loadfile(const char pathname[256]) {
     FRESULT fr = FR_OK;
 
     if (use_psram) {
-        uint8_t *dst = (uint8_t *)NES_PSRAM_BASE;
+#if PICO_RP2350
+        /* Discard the previous cartridge's cached data, including any dirty
+         * lines, before replacing the contents of the same PSRAM addresses. */
+        rom_flash_flush_cache();
+#endif
+        /* Loading through cached XIP creates dirty lines: a later reload can
+         * evict those lines and overwrite newly loaded PSRAM contents. */
+        uint8_t *dst = (uint8_t *)NES_PSRAM_UNCACHED_BASE;
         do {
             const UINT chunk = (UINT)((load_size - total_read) > 4096u ?
                                       4096u : load_size - total_read);
@@ -807,6 +815,14 @@ bool filebrowser_loadfile(const char pathname[256]) {
             sleep_ms(1200);
             return false;
         }
+#if PICO_RP2350
+        /* The previous ROM may still be in the XIP cache.  Now that all new
+         * bytes were written through the uncached alias, discard old lines
+         * before the CPU starts reading the new cartridge via cached XIP. */
+        __dsb();
+        rom_flash_flush_cache();
+        __dsb();
+#endif
         memcpy(psram_rom_filename, pathname, strlen(pathname) + 1);
         rom_filename = psram_rom_filename;
         rom = (const uint8_t *)NES_PSRAM_BASE;
@@ -928,6 +944,17 @@ static inline bool isExecutable(const char pathname[256], const char* extensions
 
 void save_config();
 
+/* Reopen the ROM browser in the directory and at the file last selected. */
+static char fb_dir[256] = "\\NES";
+static char fb_focus[80] = "";
+
+static void fb_remember(const char* dir, const char* name) {
+    strncpy(fb_dir, dir, sizeof fb_dir - 1);
+    fb_dir[sizeof fb_dir - 1] = '\0';
+    strncpy(fb_focus, name, sizeof fb_focus - 1);
+    fb_focus[sizeof fb_focus - 1] = '\0';
+}
+
 bool is_start_locked() {
     FIL fd;
     char pathname[256];
@@ -960,8 +987,10 @@ bool filebrowser(const char pathname[256], const char* executables) {
     // before it can also launch the highlighted ROM in the file browser.
     bool debounce = !gamepad1_bits.start && !keyboard_bits.start;
     char basepath[256];
+    char focus[80];
     char tmp[TEXTMODE_COLS + 1];
-    strcpy(basepath, pathname);
+    strcpy(basepath, !strcmp(pathname, HOME_DIR) ? fb_dir : pathname);
+    strcpy(focus, fb_focus);
     constexpr int per_page = TEXTMODE_ROWS - 3;
 
     DIR dir;
@@ -998,6 +1027,12 @@ bool filebrowser(const char pathname[256], const char* executables) {
 #endif
 
         if (FR_OK != f_opendir(&dir, basepath)) {
+            if (strcmp(basepath, pathname)) {
+                /* Remembered directory no longer exists (SD card replaced). */
+                strcpy(basepath, pathname);
+                focus[0] = '\0';
+                continue;
+            }
             draw_text("Failed to open directory", 1, 1, 4, 0);
             while (true);
         }
@@ -1037,6 +1072,21 @@ bool filebrowser(const char pathname[256], const char* executables) {
         int offset = 0;
         int current_item = 0;
 
+        /* Scroll the previously selected entry into view, centred when
+         * possible, and clamp the scroll offset to the actual list size. */
+        if (focus[0]) {
+            for (int i = 0; i < total_files; ++i) {
+                if (!strcmp(fileItems[i].filename, focus)) {
+                    const int max_offset = total_files > per_page ? total_files - per_page : 0;
+                    offset = i > per_page / 2 ? i - per_page / 2 : 0;
+                    if (offset > max_offset) offset = max_offset;
+                    current_item = i - offset;
+                    break;
+                }
+            }
+            focus[0] = '\0';
+        }
+
         while (true) {
             sleep_ms(100);
 
@@ -1046,6 +1096,8 @@ bool filebrowser(const char pathname[256], const char* executables) {
 
             // ESCAPE
             if (gamepad1_bits.select || keyboard_bits.select) {
+                if (total_files > 0)
+                    fb_remember(basepath, fileItems[offset + current_item].filename);
                 return false;
             }
 
@@ -1148,12 +1200,22 @@ bool filebrowser(const char pathname[256], const char* executables) {
                     if (strcmp(file_at_cursor.filename, "..") == 0) {
                         const char* lastBackslash = strrchr(basepath, '\\');
                         if (lastBackslash != nullptr) {
+                            /* On return to the parent, focus the directory
+                             * which was just exited. */
+                            strncpy(focus, lastBackslash + 1, sizeof focus - 1);
+                            focus[sizeof focus - 1] = '\0';
                             const size_t length = lastBackslash - basepath;
                             basepath[length] = '\0';
                         }
                     }
                     else {
-                        sprintf(basepath, "%s\\%s", basepath, file_at_cursor.filename);
+                        /* Never use basepath as both sprintf source and destination. */
+                        char child[256];
+                        if (snprintf(child, sizeof child, "%s\\%s", basepath,
+                                     file_at_cursor.filename) >= (int)sizeof child)
+                            continue;
+                        strcpy(basepath, child);
+                        focus[0] = '\0';
                     }
                     debounce = false;
                     break;
@@ -1165,6 +1227,7 @@ bool filebrowser(const char pathname[256], const char* executables) {
                                  file_at_cursor.filename) >= (int)sizeof fullpath)
                         continue;
                     if (filebrowser_loadfile(fullpath)) {
+                        fb_remember(basepath, file_at_cursor.filename);
                         save_config();
                         unlock_start();
                         if (rom == (const uint8_t *)NES_PSRAM_BASE) {
