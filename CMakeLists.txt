@@ -35,7 +35,7 @@ include(pico_sdk_import.cmake)
 
 project(nes C CXX ASM)
 
-set(PICO_PROGRAM_VERSION_STRING "306")
+set(PICO_PROGRAM_VERSION_STRING "307")
 
 option(I2S "Enable I2S sound" OFF)
 option(I2S_CS4334 "Enable I2S CS4334 sound" OFF)
@@ -50,12 +50,12 @@ option(m1p2launcher "Enable m1p2-launcher support" OFF)
 endif()
 
 #set(m1p2launcher ON)
-#set(I2S ON)
+set(I2S ON)
 #set(TFT ON)
 #set(ILI9341 ON)
 set(HDMI ON)
 #set(TV ON)
-set(SOFTTV ON)
+#set(SOFTTV ON)
 
 SET(PROJECT_NAME nes)
 set(FLASH_SIZE 4096)
