@@ -63,6 +63,12 @@ extern BYTE *VROM;
 /* PPU BANK ( 1Kb * 16 ) */
 extern BYTE *PPUBANK[];
 
+/* CHR-RAM larger than 8 KB (NES 2.0 header, byte 11), banked by the mapper
+ * in 1 KB pages: e.g. Full Quiet, MMC3 with 32 KB.  nullptr - the usual
+ * 8 KB in PPURAM. */
+extern BYTE *CHRRAM_Ext;
+extern DWORD CHRRAM_Ext_Pages;
+
 #define NAME_TABLE0 8
 #define NAME_TABLE1 9
 #define NAME_TABLE2 10

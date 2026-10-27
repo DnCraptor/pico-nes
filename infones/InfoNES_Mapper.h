@@ -40,6 +40,8 @@ extern BYTE DRAM[];
 #define VROMPAGE(a) &VROM[(a)*0x400]
 /* The address of 1Kbytes unit of the CRAM */
 #define CRAMPAGE(a) &PPURAM[0x0000 + ((a)&0x1F) * 0x400]
+/* The address of 1Kbytes unit of a banked CHR-RAM (CHRRAM_Ext) */
+#define CHRRAMPAGE(a) &CHRRAM_Ext[((a) % CHRRAM_Ext_Pages) * 0x400]
 /* The address of 1Kbytes unit of the VRAM */
 #define VRAMPAGE(a) &PPURAM[0x2000 + (a)*0x400]
 /* Translate the pointer to ChrBuf into the address of Pattern Table */

@@ -100,6 +100,33 @@ void *InfoNes_GetPPURAM(size_t *size)
 }
 /* PPU BANK ( 1Kb * 16 ) */
 BYTE *PPUBANK[16];
+
+BYTE *CHRRAM_Ext = nullptr;
+DWORD CHRRAM_Ext_Pages = 0;
+
+/* NES 2.0 byte 11, low nibble: CHR-RAM of 64 << n bytes.  More than 8 KB
+ * gets its own buffer (kept between games, grown when needed); without
+ * memory for it the game runs with the 8 KB in PPURAM as before. */
+static void InfoNES_SetupChrRam()
+{
+  static DWORD allocated = 0;
+  CHRRAM_Ext_Pages = 0;
+  DWORD size = 0;
+  if (NesHeader.byVRomSize == 0 && (NesHeader.byInfo2 & 0x0c) == 0x08 && (NesHeader.byReserve[3] & 0x0f))
+    size = 64u << (NesHeader.byReserve[3] & 0x0f);
+  if (size <= 0x2000 || size > 0x80000)
+    return;
+  if (size > allocated)
+  {
+    free(CHRRAM_Ext);
+    CHRRAM_Ext = (BYTE *)malloc(size);
+    allocated = CHRRAM_Ext ? size : 0;
+  }
+  if (!CHRRAM_Ext)
+    return;
+  InfoNES_MemorySet(CHRRAM_Ext, 0, size);
+  CHRRAM_Ext_Pages = size / 0x400;
+}
 /* Sprite RAM */
 BYTE SPRRAM[SPRRAM_SIZE];
 // Share with romselect.cpp
@@ -544,6 +571,7 @@ int InfoNES_Reset()
   /*  Initialize PPU                                                   */
   /*-------------------------------------------------------------------*/
 
+  InfoNES_SetupChrRam();
   InfoNES_SetupPPU();
 
   /*-------------------------------------------------------------------*/
@@ -1808,6 +1836,7 @@ extern BYTE Map4_IRQ_Latch;
 extern BYTE Map4_IRQ_Request;
 extern BYTE Map4_IRQ_Present;
 extern BYTE Map4_IRQ_Present_Vbl;
+void Map4_Set_PPU_Banks();
 #include "ff.h"
 static FATFS fs;
 char* replaceSpecialCharacters(const char* str) {
@@ -1933,6 +1962,9 @@ void save_state(const char * rom_filename)
         f_write(&fd, &Map4_IRQ_Present, 1, &bw);
         f_write(&fd, &Map4_IRQ_Present_Vbl, 1, &bw);
     }
+    // a banked CHR-RAM (CHRRAM_Ext) holds the pattern tables of the game
+    if (CHRRAM_Ext_Pages)
+        f_write(&fd, CHRRAM_Ext, CHRRAM_Ext_Pages * 0x400, &bw);
 
     f_close(&fd);
 
@@ -2045,6 +2077,13 @@ void load_state(const char * rom_filename)
         f_read(&fd, &Map4_IRQ_Request, 1, &br);
         f_read(&fd, &Map4_IRQ_Present, 1, &br);
         f_read(&fd, &Map4_IRQ_Present_Vbl, 1, &br);
+    }
+    if (CHRRAM_Ext_Pages)
+    {
+        f_read(&fd, CHRRAM_Ext, CHRRAM_Ext_Pages * 0x400, &br);
+        // the PPU banks point into CHRRAM_Ext by the restored registers
+        if (MapperNo == 4)
+            Map4_Set_PPU_Banks();
     }
     f_close(&fd);
 }

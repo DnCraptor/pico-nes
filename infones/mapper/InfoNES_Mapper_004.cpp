@@ -67,7 +67,7 @@ void Map4_Init()
   Map4_Set_CPU_Banks();
 
   /* Set PPU Banks */
-  if ( NesHeader.byVRomSize > 0 )
+  if ( NesHeader.byVRomSize > 0 || CHRRAM_Ext_Pages )
   {
     Map4_Chr01 = 0;
     Map4_Chr23 = 2;
@@ -116,7 +116,7 @@ void Map4_Write( WORD wAddr, BYTE byData )
       {
         /* Set PPU Banks */
         case 0x00:
-          if ( NesHeader.byVRomSize > 0 )
+          if ( NesHeader.byVRomSize > 0 || CHRRAM_Ext_Pages )
           {
             dwBankNum &= 0xfe;
             Map4_Chr01 = dwBankNum;
@@ -125,7 +125,7 @@ void Map4_Write( WORD wAddr, BYTE byData )
           break;
 
         case 0x01:
-          if ( NesHeader.byVRomSize > 0 )
+          if ( NesHeader.byVRomSize > 0 || CHRRAM_Ext_Pages )
           {
             dwBankNum &= 0xfe;
             Map4_Chr23 = dwBankNum;
@@ -134,7 +134,7 @@ void Map4_Write( WORD wAddr, BYTE byData )
           break;
 
         case 0x02:
-          if ( NesHeader.byVRomSize > 0 )
+          if ( NesHeader.byVRomSize > 0 || CHRRAM_Ext_Pages )
           {
             Map4_Chr4 = dwBankNum;
             Map4_Set_PPU_Banks();
@@ -142,7 +142,7 @@ void Map4_Write( WORD wAddr, BYTE byData )
           break;
 
         case 0x03:
-          if ( NesHeader.byVRomSize > 0 )
+          if ( NesHeader.byVRomSize > 0 || CHRRAM_Ext_Pages )
           {
             Map4_Chr5 = dwBankNum;
             Map4_Set_PPU_Banks();
@@ -150,7 +150,7 @@ void Map4_Write( WORD wAddr, BYTE byData )
           break;
 
         case 0x04:
-          if ( NesHeader.byVRomSize > 0 )
+          if ( NesHeader.byVRomSize > 0 || CHRRAM_Ext_Pages )
           {
             Map4_Chr6 = dwBankNum;
             Map4_Set_PPU_Banks();
@@ -158,7 +158,7 @@ void Map4_Write( WORD wAddr, BYTE byData )
           break;
 
         case 0x05:
-          if ( NesHeader.byVRomSize > 0 )
+          if ( NesHeader.byVRomSize > 0 || CHRRAM_Ext_Pages )
           {
             Map4_Chr7 = dwBankNum;
             Map4_Set_PPU_Banks();
@@ -312,6 +312,31 @@ void Map4_Set_PPU_Banks()
       PPUBANK[ 7 ] = VROMPAGE( Map4_Chr7 % ( NesHeader.byVRomSize << 3 ) );
       InfoNES_SetupChr();
     }
+  }
+  else if ( CHRRAM_Ext_Pages )
+  {
+    /* a banked CHR-RAM: the same 1 KB / 2 KB banking as CHR-ROM */
+    if ( Map4_Chr_Swap() )
+    {
+      PPUBANK[ 0 ] = CHRRAMPAGE( Map4_Chr4 );
+      PPUBANK[ 1 ] = CHRRAMPAGE( Map4_Chr5 );
+      PPUBANK[ 2 ] = CHRRAMPAGE( Map4_Chr6 );
+      PPUBANK[ 3 ] = CHRRAMPAGE( Map4_Chr7 );
+      PPUBANK[ 4 ] = CHRRAMPAGE( Map4_Chr01 + 0 );
+      PPUBANK[ 5 ] = CHRRAMPAGE( Map4_Chr01 + 1 );
+      PPUBANK[ 6 ] = CHRRAMPAGE( Map4_Chr23 + 0 );
+      PPUBANK[ 7 ] = CHRRAMPAGE( Map4_Chr23 + 1 );
+    } else {
+      PPUBANK[ 0 ] = CHRRAMPAGE( Map4_Chr01 + 0 );
+      PPUBANK[ 1 ] = CHRRAMPAGE( Map4_Chr01 + 1 );
+      PPUBANK[ 2 ] = CHRRAMPAGE( Map4_Chr23 + 0 );
+      PPUBANK[ 3 ] = CHRRAMPAGE( Map4_Chr23 + 1 );
+      PPUBANK[ 4 ] = CHRRAMPAGE( Map4_Chr4 );
+      PPUBANK[ 5 ] = CHRRAMPAGE( Map4_Chr5 );
+      PPUBANK[ 6 ] = CHRRAMPAGE( Map4_Chr6 );
+      PPUBANK[ 7 ] = CHRRAMPAGE( Map4_Chr7 );
+    }
+    InfoNES_SetupChr();
   }
   else
   {
